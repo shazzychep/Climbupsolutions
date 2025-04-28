@@ -1,0 +1,55 @@
+version: '3.8'
+
+services:
+  backend:
+    build: .
+    ports:
+      - "5000:5000"
+    environment:
+      - FLASK_ENV=development
+      - DATABASE_URL=postgresql://user:password@postgres:5432/climbup
+      - MONGODB_URI=mongodb://mongodb:27017/climbup
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    depends_on:
+      - postgres
+      - mongodb
+      - redis
+    volumes:
+      - .:/app
+    networks:
+      - climbup-network
+
+  postgres:
+    image: postgres:13
+    environment:
+      - POSTGRES_USER=user
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=climbup
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - climbup-network
+
+  mongodb:
+    image: mongo:5
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - climbup-network
+
+  redis:
+    image: redis:6
+    volumes:
+      - redis_data:/data
+    networks:
+      - climbup-network
+
+volumes:
+  postgres_data:
+  mongodb_data:
+  redis_data:
+
+networks:
+  climbup-network:
+    driver: bridge 

@@ -1,0 +1,73 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: postgres-backup
+  namespace: climbup-prod
+spec:
+  schedule: "0 0 * * *"  # Daily at midnight
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: postgres-backup
+            image: postgres:13
+            env:
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: climbup-secrets
+                  key: postgres-password
+            command:
+            - /bin/sh
+            - -c
+            - |
+              pg_dump -h postgres-service -U climbup_user -d climbup | gzip > /backup/postgres-$(date +%Y%m%d).sql.gz
+            volumeMounts:
+            - name: backup-volume
+              mountPath: /backup
+          volumes:
+          - name: backup-volume
+            persistentVolumeClaim:
+              claimName: backup-pvc
+          restartPolicy: OnFailure
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: mongodb-backup
+  namespace: climbup-prod
+spec:
+  schedule: "0 0 * * *"  # Daily at midnight
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: mongodb-backup
+            image: mongo:5
+            command:
+            - /bin/sh
+            - -c
+            - |
+              mongodump --host=mongodb-service --db=climbup --archive=/backup/mongodb-$(date +%Y%m%d).archive
+            volumeMounts:
+            - name: backup-volume
+              mountPath: /backup
+          volumes:
+          - name: backup-volume
+            persistentVolumeClaim:
+              claimName: backup-pvc
+          restartPolicy: OnFailure
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: backup-pvc
+  namespace: climbup-prod
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 100Gi 

@@ -1,0 +1,30 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: climbup-config
+  namespace: climbup-prod
+data:
+  # Database configuration
+  postgres-host: "postgres-service"
+  postgres-port: "5432"
+  postgres-db: "climbup"
+  postgres-user: "climbup_user"
+  
+  # MongoDB configuration
+  mongodb-host: "mongodb-service"
+  mongodb-port: "27017"
+  mongodb-db: "climbup"
+  
+  # Redis configuration
+  redis-host: "redis-service"
+  redis-port: "6379"
+  
+  # Application configuration
+  flask-env: "production"
+  cors-origins: "https://app.climbup.com,https://api.climbup.com"
+  rate-limit-default: "100/minute"
+  rate-limit-auth: "50/minute"
+  
+  # Logging configuration
+  log-level: "INFO"
+  log-format: "json" 

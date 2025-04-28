@@ -1,0 +1,26 @@
+name: climbup-backend
+services:
+- name: web
+  github:
+    branch: main
+    deploy_on_push: true
+  build_command: pip install -r requirements.txt
+  run_command: gunicorn app:app --bind 0.0.0.0:$PORT
+  envs:
+  - key: FLASK_ENV
+    value: production
+  - key: JWT_SECRET_KEY
+    type: SECRET
+    value: your-secret-key
+  - key: DATABASE_URL
+    type: SECRET
+    value: postgresql://user:password@host:port/dbname
+  - key: MONGODB_URI
+    type: SECRET
+    value: mongodb://user:password@host:port/dbname
+  - key: REDIS_URL
+    type: SECRET
+    value: redis://host:port
+  http_port: 8080
+  instance_count: 1
+  instance_size_slug: basic-xs 

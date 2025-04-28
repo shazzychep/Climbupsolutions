@@ -1,0 +1,26 @@
+[build]
+builder = "nixpacks"
+buildCommand = "pip install -r requirements.txt"
+
+[deploy]
+startCommand = "gunicorn app:app -w 4 -b 0.0.0.0:${PORT:-8000}"
+healthcheckPath = "/health"
+healthcheckTimeout = 100
+restartPolicyType = "on_failure"
+restartPolicyMaxRetries = 10
+
+[deploy.autoRollback]
+enable = true
+
+[deploy.autoRollback.conditions]
+maxRestarts = 5
+timeout = 300
+
+[deploy.autoRollback.conditions.healthcheck]
+maxFailures = 3
+interval = 30
+
+[plugins]
+postgresql = { enabled = true }
+mongodb = { enabled = true }
+redis = { enabled = true } 

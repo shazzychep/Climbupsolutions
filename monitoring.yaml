@@ -1,0 +1,50 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: climbup-backend
+  namespace: climbup-prod
+spec:
+  selector:
+    matchLabels:
+      app: climbup-backend
+  endpoints:
+  - port: metrics
+    interval: 15s
+    path: /metrics
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: prometheus-rules
+  namespace: climbup-prod
+data:
+  backend-rules.yaml: |
+    groups:
+    - name: backend
+      rules:
+      - alert: HighErrorRate
+        expr: rate(http_requests_total{status=~"5.."}[5m]) > 0.1
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: High error rate on {{ $labels.instance }}
+          description: Error rate is {{ $value }} per second
+      
+      - alert: HighLatency
+        expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m])) > 1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: High latency on {{ $labels.instance }}
+          description: 95th percentile latency is {{ $value }} seconds
+      
+      - alert: DatabaseConnectionError
+        expr: up{job="climbup-backend"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: Database connection error on {{ $labels.instance }}
+          description: Service is down 
